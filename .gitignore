@@ -33,3 +33,5 @@ dist/
 .tsbuildinfo
 
 buildnode_modules
+
+text.txt
