@@ -3,6 +3,14 @@ import type { PlasmoCSConfig } from "plasmo";
 import Vocab from "../components/vocab";
 import PopupWindow from "../components/popupWindow";
 
+import type { PlasmoGetRootContainer } from "plasmo";
+
+export const getRootContainer: PlasmoGetRootContainer = async () => {
+  const container = document.createElement("div");
+  document.body.appendChild(container); // 追加到 <body>
+  return container; // 返回新容器作为挂载点
+};
+
 export const config: PlasmoCSConfig = {
   matches: ["<all_urls>"]
 };
