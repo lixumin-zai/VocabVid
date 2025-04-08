@@ -1,5 +1,14 @@
 import { useState, useEffect } from "react"
-import { getAuthState, login, logout, initAuthState } from "../utils/authState"
+import { 
+  initAuthState, 
+  getAuthState, 
+  login, 
+  logout, 
+  addAuthChangeListener 
+} from "../services/authService"
+import { 
+  APIService
+} from "../services/requests"
 
 // 样式常量
 const styles = {
@@ -138,22 +147,36 @@ function IndexPopup() {
 
   // 初始化并加载认证状态
   useEffect(() => {
-    initAuthState().then(() => {
-      const authState = getAuthState();
-      setIsLoggedIn(authState.isLoggedIn);
+    const loadAuthState = async () => {
+      await initAuthState()
+      const authState = await getAuthState()
+      setIsLoggedIn(authState.isLoggedIn)
       if (authState.isLoggedIn) {
-        setUsername(authState.username);
+        setUsername(authState.username)
       }
-    });
-  }, []);
+    }
+    loadAuthState()
+    // 添加认证状态变化监听
+    const cleanup = addAuthChangeListener((newState) => {
+      setIsLoggedIn(newState.isLoggedIn)
+      if (newState.isLoggedIn) {
+        setUsername(newState.username)
+      }
+    })
+    
+    return cleanup
+  }, [])
 
-  const handleLogin = () => {
-    // 这里可以添加实际的登录逻辑，比如API调用
+  const handleLogin = async () => {
     if (username && password) {
-      // 模拟登录成功
-      login(username); // 使用全局状态管理的登录函数
-      setIsLoggedIn(true);
-      setError("");
+      try {
+        const token = await APIService.login(username, password)
+        await login(username, token)
+        setIsLoggedIn(true)
+        setError("")
+      } catch (error) {
+        setError("登录失败，请检查用户名和密码")
+      }
     } else {
       setError("请输入用户名和密码")
     }

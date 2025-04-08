@@ -49,7 +49,7 @@ const PopupComponent = () => {
       const newPopupId = `popup-${Date.now()}`;
       const newZIndex = highestZIndex + 1;
       setHighestZIndex(newZIndex);
-      console.log(newZIndex);
+
       const newPopup: PopupData = {
         id: newPopupId,
         visible: true,
@@ -79,7 +79,6 @@ const PopupComponent = () => {
 
   // 关闭指定弹窗
   const closePopup = (popupId: string) => {
-    console.log(popups);
     setPopups(prevPopups => 
       prevPopups.map(popup => 
         popup.id === popupId ? { ...popup, visible: false } : popup

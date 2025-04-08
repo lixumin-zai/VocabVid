@@ -14,10 +14,14 @@ interface TableItem {
 
 const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
   const [tableData, setTableData] = useState<TableItem[]>([]);
+  const [chineseTranslation, setChineseTranslation] = useState("");
   const containerRef = useRef<HTMLDivElement>(null);
+  const [isValidMarkdown, setIsValidMarkdown] = useState(false);
 
   useEffect(() => {
-    parseMarkdownTable();
+    if (markdownText) {
+      parseMarkdownTable();
+    }
   }, [markdownText]);
 
   // 添加清理函数，确保组件卸载时移除所有气泡
@@ -32,9 +36,71 @@ const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
     };
   }, []);
 
+  // parseMarkdownTable 函数修改以支持流式内容
+  const parseMarkdownTable = () => {
+    try {
+      // 处理文本中的\n字符串，将其转换为实际换行符
+      const processedText = markdownText.replace(/\\n/g, '\n');
+      
+      // 分割文本为行
+      const lines = processedText.split('\n');
+      
+      // 提取中文翻译
+      const chineseTranslationLine = lines.find(line => 
+        line.startsWith('**中文翻译**'));
+      
+      const translation = chineseTranslationLine 
+        ? lines[lines.indexOf(chineseTranslationLine) + 1] 
+        : '';
+      
+      setChineseTranslation(translation);
+            
+      // 查找表头行的索引
+      const headerIndex = lines.findIndex(line => 
+        line.includes("|原文分词|译文完全对应词|具体解释|"));
+      
+      if (headerIndex === -1) {
+        // 如果还没有找到表头，可能是流式内容还不完整
+        setIsValidMarkdown(false);
+        return;
+      }
+      
+      setIsValidMarkdown(true);
+      
+      const result: TableItem[] = [];
+      
+      // 跳过表头和分隔行
+      for (let i = headerIndex + 2; i < lines.length; i++) {
+        const line = lines[i].trim();
+        if (!line || !line.startsWith("|") || !line.endsWith("|")) continue;
+        
+        // 分割单元格
+        const cells = line.split("|").filter(cell => cell.trim() !== "");
+        if (cells.length >= 3) {
+          result.push({
+            original: cells[0].trim(),
+            translation: cells[1].trim(),
+            explanation: cells[2].trim()
+          });
+        }
+      }
+      
+      setTableData(result);
+    } catch (error) {
+      console.error("解析表格出错:", error);
+      setIsValidMarkdown(false);
+    }
+  };
+
   // 渲染句子部分
   const renderSentence = () => {
-    if (tableData.length === 0) return null;
+    if (!isValidMarkdown || tableData.length === 0) {
+      return (
+        <div style={{ padding: "15px", color: "#666" }}>
+          {markdownText ? "正在解析内容..." : "暂无内容"}
+        </div>
+      );
+    }
 
     // 构建原始句子文本
     const originalSentence = tableData.map(item => item.original).join(' ');
@@ -71,17 +137,6 @@ const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
           console.error('复制失败:', err);
         });
     };
-
-    // 提取中文翻译句子 - 修改这部分
-    const processedText = markdownText.replace(/\\n/g, '\n');
-    const lines = processedText.split('\n');
-    
-    const chineseTranslationLine = lines.find(line => 
-      line.startsWith('**中文翻译**'));
-    
-    const chineseTranslation = chineseTranslationLine 
-      ? lines[lines.indexOf(chineseTranslationLine) + 1] 
-      : '';
         
     return (
       <div style={{
@@ -123,44 +178,46 @@ const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
         </div>
         
         {/* 中文翻译 */}
-        <div>
-          <h3 style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "8px", color: "#333" }}>中文翻译</h3>
-          <p>
-            {chineseTranslation.split(/(?<=[\u4e00-\u9fa5])(?![\u4e00-\u9fa5])|(?![\u4e00-\u9fa5])(?=[\u4e00-\u9fa5])/).map((word, index) => {
-              // 检查是否是中文词语
-              const isChinese = /[\u4e00-\u9fa5]/.test(word);
-              const matchedEnglishWords = isChinese && translationMap.has(word) ? translationMap.get(word) : null;
-              
-              if (isChinese && matchedEnglishWords && matchedEnglishWords.length > 0) {
-                // 查找对应的英文单词的解释
-                const englishWord = matchedEnglishWords[0];
-                const item = tableData.find(item => item.original === englishWord);
+        {chineseTranslation && (
+          <div>
+            <h3 style={{ fontSize: "16px", fontWeight: "bold", marginBottom: "8px", color: "#333" }}>中文翻译</h3>
+            <p>
+              {chineseTranslation.split(/(?<=[\u4e00-\u9fa5])(?![\u4e00-\u9fa5])|(?![\u4e00-\u9fa5])(?=[\u4e00-\u9fa5])/).map((word, index) => {
+                // 检查是否是中文词语
+                const isChinese = /[\u4e00-\u9fa5]/.test(word);
+                const matchedEnglishWords = isChinese && translationMap.has(word) ? translationMap.get(word) : null;
                 
-                return (
-                  <span 
-                    key={`cn-${index}`}
-                    className="vocab-word-cn" 
-                    style={{
-                      fontWeight: "bold", 
-                      color: "#0f9d58", 
-                      position: "relative", 
-                      cursor: "help", 
-                      transition: "background-color 0.2s ease"
-                    }}
-                    data-english={matchedEnglishWords.join(', ')}
-                    data-explanation={item?.explanation || ''}
-                    onMouseEnter={(e) => handleChineseWordHover(e)}
-                    onMouseLeave={(e) => handleWordLeave(e)}
-                  >
-                    {word}
-                  </span>
-                );
-              } else {
-                return <span key={`cn-${index}`}>{word}</span>;
-              }
-            })}
-          </p>
-        </div>
+                if (isChinese && matchedEnglishWords && matchedEnglishWords.length > 0) {
+                  // 查找对应的英文单词的解释
+                  const englishWord = matchedEnglishWords[0];
+                  const item = tableData.find(item => item.original === englishWord);
+                  
+                  return (
+                    <span 
+                      key={`cn-${index}`}
+                      className="vocab-word-cn" 
+                      style={{
+                        fontWeight: "bold", 
+                        color: "#0f9d58", 
+                        position: "relative", 
+                        cursor: "help", 
+                        transition: "background-color 0.2s ease"
+                      }}
+                      data-english={matchedEnglishWords.join(', ')}
+                      data-explanation={item?.explanation || ''}
+                      onMouseEnter={(e) => handleChineseWordHover(e)}
+                      onMouseLeave={(e) => handleWordLeave(e)}
+                    >
+                      {word}
+                    </span>
+                  );
+                } else {
+                  return <span key={`cn-${index}`}>{word}</span>;
+                }
+              })}
+            </p>
+          </div>
+        )}
         
         {/* 添加复制按钮 */}
         <button
@@ -336,58 +393,6 @@ const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
     }
   };
 
-  // parseMarkdownTable 函数需要修改以正确提取中文翻译
-  const parseMarkdownTable = () => {
-    try {
-      // 处理文本中的\n字符串，将其转换为实际换行符
-      const processedText = markdownText.replace(/\\n/g, '\n');
-      
-      // 分割文本为行
-      const lines = processedText.split('\n');
-      
-      const result: TableItem[] = [];
-  
-      // 提取中文翻译
-      const chineseTranslationLine = lines.find(line => 
-        line.startsWith('**中文翻译**'));
-      
-      const chineseTranslation = chineseTranslationLine 
-        ? lines[lines.indexOf(chineseTranslationLine) + 1] 
-        : '';
-            
-      // 查找表头行的索引
-      const headerIndex = lines.findIndex(line => 
-        line.includes("|原文分词|译文完全对应词|具体解释|"));
-      
-      if (headerIndex === -1) {
-        throw new Error("找不到表头");
-      }
-      
-      // 跳过表头和分隔行
-      for (let i = headerIndex + 2; i < lines.length; i++) {
-        const line = lines[i].trim();
-        if (!line || !line.startsWith("|") || !line.endsWith("|")) continue;
-        
-        // 分割单元格
-        const cells = line.split("|").filter(cell => cell.trim() !== "");
-        if (cells.length >= 3) {
-          result.push({
-            original: cells[0].trim(),
-            translation: cells[1].trim(),
-            explanation: cells[2].trim()
-          });
-        }
-      }
-      
-      setTableData(result);
-    } catch (error) {
-      console.error("解析表格出错:", error);
-      if (containerRef.current) {
-        containerRef.current.innerHTML = `<div style="color: red;">解析表格出错: ${error.message}</div>`;
-      }
-    }
-  };
-
   // 处理单词悬停
   const handleWordHover = (e: React.MouseEvent<HTMLSpanElement>) => {
     const target = e.currentTarget;
@@ -545,7 +550,7 @@ const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
 
   // 渲染统计信息
   const renderSummary = () => {
-    if (tableData.length === 0) return null;
+    if (!isValidMarkdown || tableData.length === 0) return null;
 
     return (
       <div style={{
@@ -561,6 +566,21 @@ const ShowSentence: React.FC<{ markdownText: string }> = ({ markdownText }) => {
       </div>
     );
   };
+
+  // 如果内容为空或不是有效的 Markdown，显示原始内容
+  if (!isValidMarkdown && markdownText) {
+    return (
+      <div 
+        ref={containerRef}
+        style={{ 
+          whiteSpace: "pre-wrap",
+          padding: "10px",
+          color: "#333"
+        }}
+        dangerouslySetInnerHTML={{ __html: markdownText }}
+      />
+    );
+  }
 
   return (
     <div ref={containerRef}>
