@@ -22,6 +22,7 @@ interface PopupData {
   visible: boolean;
   coords: { x: number; y: number; w: number; h: number };
   zIndex: number; // 添加 zIndex 属性控制窗口层级
+  showGpuInfo: boolean; // 添加控制是否显示GpuInfo的属性
 }
 
 const PopupComponent = () => {
@@ -55,11 +56,21 @@ const PopupComponent = () => {
         id: newPopupId,
         visible: true,
         coords: generateRandomPosition(),
-        zIndex: newZIndex
+        zIndex: newZIndex,
+        showGpuInfo: false // 默认不显示GpuInfo
       };
       
       setPopups(prevPopups => [...prevPopups, newPopup]);
     }
+  };
+
+  // 切换GpuInfo显示状态
+  const toggleGpuInfo = (popupId: string) => {
+    setPopups(prevPopups => 
+      prevPopups.map(popup => 
+        popup.id === popupId ? { ...popup, showGpuInfo: !popup.showGpuInfo } : popup
+      )
+    );
   };
 
   // 将窗口置于最前面
@@ -124,7 +135,25 @@ const PopupComponent = () => {
           }}
           onFocus={() => bringToFront(popup.id)}
           onBlur={() => resetZIndex(popup.id)}
-          children={<><Vocab /><GpuInfo/></>}
+          children={
+            <>
+              <div style={{ textAlign: 'right', padding: '5px' }}>
+                <button 
+                  onClick={() => toggleGpuInfo(popup.id)}
+                  style={{ 
+                    padding: '1px 2px', 
+                    background: popup.showGpuInfo ? '#225F50' : '#77f1f1',
+                    border: 'none',
+                    borderRadius: '4px',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {popup.showGpuInfo ? '显示词汇' : '显示GPU信息'}
+                </button>
+              </div>
+              {popup.showGpuInfo ? <GpuInfo/> : <Vocab />}
+            </>
+          }
         />
       ))}
     </>

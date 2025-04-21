@@ -22,15 +22,20 @@ const Vocab = () => {
     // 处理按键事件
     const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
         if (e.key === "Enter" && inputValue.trim()) {
-        // 尝试解析 Markdown 表格
+            // 尝试解析 Markdown 表格
+            setMarkdownText("");
+            console.log(inputValue);
             setMarkdownText(inputValue);
-            setInputValue("");
+            setIsStreaming(true);
+            setStreamedContent("");
+            setShowSentence(false);
         }
     };
+    
     const buttonClick = () => {
         if (inputValue.trim()) {
             setMarkdownText(inputValue);
-            setInputValue("");
+            // setInputValue("");
             setIsStreaming(true);
             setStreamedContent("");
             setShowSentence(false);
