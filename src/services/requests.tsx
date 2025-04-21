@@ -9,6 +9,25 @@ interface StreamOptions {
   onError: (error: Error) => void
 }
 
+// GPU 信息接口定义
+interface GpuData {
+  index: number;
+  name: string;
+  driver_version: string;
+  temperature: number;
+  gpu_utilization: number;
+  memory_utilization: number;
+  total_memory: number;
+  free_memory: number;
+  used_memory: number;
+}
+
+interface GpuResponse {
+  status: string;
+  gpu_count: number;
+  gpus: GpuData[];
+}
+
 export class APIService {
   private static readonly BASE_URL = 'http://localhost:20050'
   
@@ -96,5 +115,27 @@ export class APIService {
     }
 
     return data.access_token
+  }
+
+  // 获取 GPU 信息
+  public static async fetchGpuInfo(): Promise<GpuResponse> {
+    try {
+      const response = await fetch(`${this.BASE_URL}/gpu/info`, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      });
+      const data = await response.json()
+      console.log(data)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return data;
+    } catch (error) {
+      console.error("获取 GPU 信息失败:", error);
+      throw new Error("获取 GPU 信息失败，请检查网络连接或服务器状态");
+    }
   }
 }

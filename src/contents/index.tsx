@@ -1,6 +1,7 @@
 import React, { useEffect, useRef, useState } from "react";
 import type { PlasmoCSConfig } from "plasmo";
 import Vocab from "../components/vocab";
+import GpuInfo from "../components/gpuInfo";
 import PopupWindow from "../components/popupWindow";
 
 import type { PlasmoGetRootContainer } from "plasmo";
@@ -123,7 +124,7 @@ const PopupComponent = () => {
           }}
           onFocus={() => bringToFront(popup.id)}
           onBlur={() => resetZIndex(popup.id)}
-          children={<Vocab />}
+          children={<><Vocab /><GpuInfo/></>}
         />
       ))}
     </>
