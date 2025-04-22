@@ -148,7 +148,7 @@ const PopupComponent = () => {
                     cursor: 'pointer'
                   }}
                 >
-                  {popup.showGpuInfo ? '显示词汇' : '显示GPU信息'}
+                  {popup.showGpuInfo ? '问答' : 'GPU'}
                 </button>
               </div>
               {popup.showGpuInfo ? <GpuInfo/> : <Vocab />}

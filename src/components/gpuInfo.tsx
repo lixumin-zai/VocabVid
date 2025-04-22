@@ -398,7 +398,7 @@ const GpuInfo: React.FC<GpuInfoProps> = () => {
         {/* 内存使用情况 */}
         <div style={{ marginTop: "10px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "5px" }}>
-            <span style={{ color: "#DDDDDD", fontSize: "12px" }}>内存使用</span>
+            <span style={{ color: "#DDDDDD", fontSize: "12px" }}>显存使用</span>
             <span style={{ color: "#DDDDDD", fontSize: "12px" }}>
               {formatMemory(gpu.used_memory)} / {formatMemory(gpu.total_memory)}
             </span>
