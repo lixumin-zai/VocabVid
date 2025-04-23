@@ -3,6 +3,7 @@ import type { PlasmoCSConfig } from "plasmo";
 import Vocab from "../components/vocab";
 import GpuInfo from "../components/gpuInfo";
 import PopupWindow from "../components/popupWindow";
+import PasteImage from "~components/pasteImage";
 
 import type { PlasmoGetRootContainer } from "plasmo";
 
@@ -22,7 +23,7 @@ interface PopupData {
   visible: boolean;
   coords: { x: number; y: number; w: number; h: number };
   zIndex: number; // 添加 zIndex 属性控制窗口层级
-  showGpuInfo: boolean; // 添加控制是否显示GpuInfo的属性
+  selectedComponent: 'vocab' | 'gpuInfo' | 'pasteImage'; // 添加选择的组件类型
 }
 
 const PopupComponent = () => {
@@ -57,18 +58,18 @@ const PopupComponent = () => {
         visible: true,
         coords: generateRandomPosition(),
         zIndex: newZIndex,
-        showGpuInfo: false // 默认不显示GpuInfo
+        selectedComponent: 'vocab' // 默认显示Vocab组件
       };
       
       setPopups(prevPopups => [...prevPopups, newPopup]);
     }
   };
 
-  // 切换GpuInfo显示状态
-  const toggleGpuInfo = (popupId: string) => {
+  // 切换选择的组件
+  const changeSelectedComponent = (popupId: string, component: 'vocab' | 'gpuInfo' | 'pasteImage') => {
     setPopups(prevPopups => 
       prevPopups.map(popup => 
-        popup.id === popupId ? { ...popup, showGpuInfo: !popup.showGpuInfo } : popup
+        popup.id === popupId ? { ...popup, selectedComponent: component } : popup
       )
     );
   };
@@ -137,21 +138,27 @@ const PopupComponent = () => {
           onBlur={() => resetZIndex(popup.id)}
           children={
             <>
-              <div style={{ textAlign: 'right', padding: '5px' }}>
-                <button 
-                  onClick={() => toggleGpuInfo(popup.id)}
+              <div style={{ textAlign: 'right', padding: '5px', display: 'flex', justifyContent: 'flex-end' }}>
+                <select 
+                  value={popup.selectedComponent}
+                  onChange={(e) => changeSelectedComponent(popup.id, e.target.value as 'vocab' | 'gpuInfo' | 'pasteImage')}
                   style={{ 
-                    padding: '1px 2px', 
-                    background: popup.showGpuInfo ? '#225F50' : '#77f1f1',
-                    border: 'none',
+                    padding: '2px 5px', 
+                    marginRight: '5px',
                     borderRadius: '4px',
+                    border: '1px solid #ccc',
+                    background: '#f8f8f8',
                     cursor: 'pointer'
                   }}
                 >
-                  {popup.showGpuInfo ? '问答' : 'GPU'}
-                </button>
+                  <option value="vocab">词汇</option>
+                  <option value="gpuInfo">GPU信息</option>
+                  <option value="pasteImage">图片粘贴</option>
+                </select>
               </div>
-              {popup.showGpuInfo ? <GpuInfo/> : <Vocab />}
+              {popup.selectedComponent === 'vocab' && <Vocab />}
+              {popup.selectedComponent === 'gpuInfo' && <GpuInfo />}
+              {popup.selectedComponent === 'pasteImage' && <PasteImage />}
             </>
           }
         />
