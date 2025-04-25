@@ -128,7 +128,6 @@ export class APIService {
         }
       });
       const data = await response.json()
-      console.log(data)
       if (!response.ok) {
         throw new Error(`HTTP error! status: ${response.status}`);
       }
@@ -138,4 +137,27 @@ export class APIService {
       throw new Error("获取 GPU 信息失败，请检查网络连接或服务器状态");
     }
   }
+
+  // 获取 okx 信息
+  public static async okxInfo(): Promise<GpuResponse> {
+    try {
+      const response = await fetch(`${this.BASE_URL}/okx`, {
+        method: 'GET',
+        mode: 'cors',
+        headers: {
+          'Content-Type': 'application/x-www-form-urlencoded',
+        }
+      });
+      const data = await response.json()
+      // console.log(data)
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+      return data;
+    } catch (error) {
+      console.error("获取 GPU 信息失败:", error);
+      throw new Error("获取 GPU 信息失败，请检查网络连接或服务器状态");
+    }
+  }
+
 }

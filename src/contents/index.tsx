@@ -4,6 +4,8 @@ import Vocab from "../components/vocab";
 import GpuInfo from "../components/gpuInfo";
 import PopupWindow from "../components/popupWindow";
 import PasteImage from "~components/pasteImage";
+import Okx from "~components/okx";
+import TextShow from "~components/textShow";
 
 import type { PlasmoGetRootContainer } from "plasmo";
 
@@ -23,7 +25,7 @@ interface PopupData {
   visible: boolean;
   coords: { x: number; y: number; w: number; h: number };
   zIndex: number; // 添加 zIndex 属性控制窗口层级
-  selectedComponent: 'vocab' | 'gpuInfo' | 'pasteImage'; // 添加选择的组件类型
+  selectedComponent: 'vocab' | 'gpuInfo' | 'pasteImage'| 'okx' | 'textShow'; // 添加选择的组件类型
 }
 
 const PopupComponent = () => {
@@ -154,11 +156,15 @@ const PopupComponent = () => {
                   <option value="vocab">词汇</option>
                   <option value="gpuInfo">GPU信息</option>
                   <option value="pasteImage">图片粘贴</option>
+                  <option value="okx">okx</option>
+                  <option value="textShow">textShow</option>
                 </select>
               </div>
               {popup.selectedComponent === 'vocab' && <Vocab />}
               {popup.selectedComponent === 'gpuInfo' && <GpuInfo />}
               {popup.selectedComponent === 'pasteImage' && <PasteImage />}
+              {popup.selectedComponent === 'okx' && <Okx />}
+              {popup.selectedComponent === 'textShow' && <TextShow />}
             </>
           }
         />
